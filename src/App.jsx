@@ -1,3 +1,7 @@
+
+
+import { useState, useEffect, useRef, useCallback } from "react";
+
 const testSupabase = async () => {
   const res = await fetch('https://fuikrlwvqnrhgbtztavm.supabase.co/rest/v1/profiles', {
     method: 'GET',
@@ -9,9 +13,6 @@ const testSupabase = async () => {
   console.log(data);
   alert(JSON.stringify(data));
 };
-
-import { useState, useEffect, useRef, useCallback } from "react";
-
 // ←←← Add the Supabase code here
 const SUPABASE_URL = 'https://fuikrlwvqnrhgbtztavm.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1aWtybHd2cW5yaGdidHp0YXZtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzA4MzU0MSwiZXhwIjoyMDk4NjU5NTQxfQ.lLPqKhIJzM1awipmhMYL2IkFZ0b_JR2qYLE1XObWBWk ';
