@@ -2,17 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const testSupabase = async () => {
-  const res = await fetch('https://fuikrlwvqnrhgbtztavm.supabase.co/rest/v1/profiles', {
-    method: 'GET',
-    headers: {
-      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1aWtybHd2cW5yaGdidHp0YXZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODM1NDEsImV4cCI6MjA5ODY1OTU0MX0.bZ5_fWi2XR5ancZs0P23SSk4ldwKrp7uG7aJY2np_6A',
-    }
-  });
-  const data = await res.json();
-  console.log(data);
-  alert(JSON.stringify(data));
-};
+
 // ←←← Add the Supabase code here
 const SUPABASE_URL = 'https://fuikrlwvqnrhgbtztavm.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1aWtybHd2cW5yaGdidHp0YXZtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzA4MzU0MSwiZXhwIjoyMDk4NjU5NTQxfQ.lLPqKhIJzM1awipmhMYL2IkFZ0b_JR2qYLE1XObWBWk ';
@@ -128,6 +118,22 @@ function usePrices() {
   }, 1800);
   return prices;
 }
+const testSupabase = async () => {
+  try {
+    const res = await fetch('https://fuikrlwvqnrhgbtztavm.supabase.co/rest/v1/profiles?select=*', {
+      method: 'GET',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      }
+    });
+    const data = await res.json();
+    alert("Supabase Response: " + JSON.stringify(data));
+    console.log(data);
+  } catch (e) {
+    alert("Error: " + e.message);
+  }
+};
 
 // ── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const S = {
@@ -350,6 +356,12 @@ function HomePage({ prices, setPage, setShowAuth, setSelectedPlan }) {
             ))}
           </div>
         </div>
+<button 
+  onClick={testSupabase} 
+  style={{padding: "12px 24px", margin: "20px auto", display: "block", background: "#00D4AA", color: "black", border: "none", borderRadius: "8px", fontWeight: "bold"}}
+>
+  Test Supabase Connection
+</button>
       </div>
 
       {/* STATS */}
