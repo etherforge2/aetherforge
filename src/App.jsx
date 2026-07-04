@@ -229,65 +229,49 @@ function AuthModal({ mode, onClose, onSuccess }) {
   const [err, setErr] = useState("");
 
   const handle = async () => {
-    if (!form.email || !form.password) {
-      setErr("Please fill required fields.");
-      return;
-    }
+  if (!form.email || !form.password) {
+    setErr("Please fill required fields.");
+    return;
+  }
 
-    setLoading(true);
-    setErr("");
+  setLoading(true);
+  setErr("");
 
-    try {
-      if (tab === "register") {
-        const { data, error } = await supabaseFetch('/auth/v1/signup', {
-          method: 'POST',
-          body: JSON.stringify({
-            email: form.email,
-            password: form.password,
-            options: {
-              data: {
-                full_name: form.name,
-                country: form.country
-              }
-            }
-          })
-        });
+  try {
+    const { data, error } = await supabaseFetch('/auth/v1/signup', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: { full_name: form.name }
+        }
+      })
+    });
 
-        if (error) throw error;
+    if (error) throw error;
 
-        // Create profile with zero balance
-        await supabaseFetch('/rest/v1/profiles', {
-          method: 'POST',
-          body: JSON.stringify({
-            user_id: data.user.id,
-            full_name: form.name,
-            email: form.email,
-            country: form.country,
-            balance: 0
-          })
-        });
+    // Create profile
+    await supabaseFetch('/rest/v1/profiles', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: data.user.id,
+        full_name: form.name || form.email.split("@")[0],
+        email: form.email,
+        country: form.country || "Other",
+        balance: 0
+      })
+    });
 
-        onSuccess({ name: form.name || form.email.split("@")[0], email: form.email, balance: 0 });
-      } else {
-        // Login logic (we'll improve this later)
-        const { data, error } = await supabaseFetch('/auth/v1/token?grant_type=password', {
-          method: 'POST',
-          body: JSON.stringify({
-            email: form.email,
-            password: form.password
-          })
-        });
-
-        if (error) throw error;
-
-        onSuccess({ name: form.email.split("@")[0], email: form.email, balance: 0 });
-      }
-    } catch (error) {
-      setErr(error.message || "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
+    alert("Account created successfully! (Check Supabase)");
+    onSuccess({ name: form.name || form.email.split("@")[0], email: form.email, balance: 0 });
+    onClose();
+  } catch (error) {
+    setErr(error.message || "Registration failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   
 // ── PLAN CARD ────────────────────────────────────────────────────────────────
