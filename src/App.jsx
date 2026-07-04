@@ -19,7 +19,6 @@ const supabaseFetch = async (path, options = {}) => {
 };
 
 //
-import { useState, useEffect, useRef, useCallback } from "react";
 
 const BRAND = { name: "AetherForge", tagline: "Institutional-Grade Trading Returns for Everyone", since: "2019" };
 
