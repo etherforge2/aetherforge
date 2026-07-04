@@ -1,4 +1,14 @@
-
+const testSupabase = async () => {
+  const res = await fetch('https://fuikrlwvqnrhgbtztavm.supabase.co/rest/v1/profiles', {
+    method: 'GET',
+    headers: {
+      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1aWtybHd2cW5yaGdidHp0YXZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODM1NDEsImV4cCI6MjA5ODY1OTU0MX0.bZ5_fWi2XR5ancZs0P23SSk4ldwKrp7uG7aJY2np_6A',
+    }
+  });
+  const data = await res.json();
+  console.log(data);
+  alert(JSON.stringify(data));
+};
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
