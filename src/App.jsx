@@ -212,45 +212,63 @@ function AuthModal({ mode, onClose, onSuccess }) {
   const isMobile = useIsMobile();
 
   const handle = async () => {
-    if (!form.email || !form.password) { setErr("Please fill required fields."); return; }
-    setLoading(true); await new Promise(r => setTimeout(r, 1200)); setLoading(false);
-    onSuccess({ name: form.name || form.email.split("@")[0], email: form.email, balance: 0 });
-  };
+  if (!form.email || !form.password) {
+    setErr("Please fill required fields.");
+    return;
+  }
 
-  return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", background: "rgba(8,12,24,0.85)", backdropFilter: "blur(8px)" }}>
-      <div style={{ ...S.glassCard, width: "100%", maxWidth: isMobile ? "100%" : 440, padding: isMobile ? "28px 20px 40px" : 40, borderRadius: isMobile ? "20px 20px 0 0" : 16, position: "relative", maxHeight: "90vh", overflowY: "auto" }}>
-        <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", color: PALETTE.textMuted, fontSize: 22, cursor: "pointer" }}>✕</button>
-        <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "rgba(0,0,0,0.3)", borderRadius: 10, padding: 4 }}>
-          {["login", "register"].map(t => (
-            <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "10px", border: "none", borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: "pointer", background: tab === t ? PALETTE.teal : "transparent", color: tab === t ? "#080C18" : PALETTE.textMuted, transition: "all .2s" }}>{t === "login" ? "Sign In" : "Register"}</button>
-          ))}
-        </div>
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 4 }}>{tab === "login" ? "Welcome back" : "Create Account"}</div>
-          <div style={{ color: PALETTE.textMuted, fontSize: 13 }}>{tab === "login" ? "Access your trading dashboard" : "Join 284,917+ investors worldwide"}</div>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {tab === "register" && <div><label style={S.label}>Full Name *</label><input style={S.input} placeholder="John Smith" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></div>}
-          <div><label style={S.label}>Email *</label><input style={S.input} type="email" placeholder="you@example.com" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} /></div>
-          <div><label style={S.label}>Password *</label><input style={S.input} type="password" placeholder="••••••••" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} /></div>
-          {tab === "register" && (
-            <div><label style={S.label}>Country</label>
-              <select style={{ ...S.input, appearance: "none" }} value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))}>
-                <option value="">Select...</option>
-                {["United Kingdom","Singapore","United States","Australia","Germany","Canada","UAE","Other"].map(c => <option key={c}>{c}</option>)}
-              </select>
-            </div>
-          )}
-          {err && <div style={{ color: PALETTE.danger, fontSize: 13, textAlign: "center" }}>{err}</div>}
-          <button onClick={handle} style={{ ...S.tealBtn, width: "100%", padding: "14px 0", fontSize: 15, marginTop: 4 }} disabled={loading}>{loading ? "Processing..." : tab === "login" ? "Sign In" : "Create Account"}</button>
-        </div>
-        <div style={{ marginTop: 16, padding: 12, background: "rgba(0,0,0,0.3)", borderRadius: 8, fontSize: 11, color: PALETTE.textDim, lineHeight: 1.6 }}>🔒 AES-256 encrypted. FCA regulated. Capital at risk.</div>
-      </div>
-    </div>
-  );
-}
+  setLoading(true);
+  setErr("");
 
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+      },
+      body: JSON.stringify({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: {
+            full_name: form.name,
+          },
+        },
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // Create profile
+      await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+        },
+        body: JSON.stringify({
+          user_id: data.user.id,
+          full_name: form.name,
+          email: form.email,
+          country: form.country,
+          balance: 0,
+        }),
+      });
+
+      onSuccess({ name: form.name || form.email.split("@")[0], email: form.email, balance: 0 });
+      onClose();
+    } else {
+      setErr(data.message || "Registration failed");
+    }
+  } catch (error) {
+    setErr("Network error. Try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 // ── PLAN CARD ────────────────────────────────────────────────────────────────
 function PlanCard({ plan, onSelect }) {
   const [hover, setHover] = useState(false);
