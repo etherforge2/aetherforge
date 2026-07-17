@@ -1012,6 +1012,60 @@ function Footer({ setPage }) {
     </footer>
   );
 }
+// Admin Panel
+function AdminPanel() {
+  const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => { fetchUsers(); }, []);
+
+  async function fetchUsers() {
+    const { data } = await supabase.from('profiles').select('*');
+    setUsers(data || []);
+  }
+
+  async function updateBalance(userId, newBalance) {
+    if (!confirm("Update this user's balance?")) return;
+    await supabase.from('profiles').update({ balance: newBalance }).eq('id', userId);
+    fetchUsers();
+  }
+
+  const filtered = users.filter(u => u.email?.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 16px" }}>
+      <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 20 }}>Admin Panel - Balance Management</h1>
+      <input type="text" placeholder="Search by email..." value={search} onChange={e => setSearch(e.target.value)} style={{ ...S.input, marginBottom: 20, width: "100%" }} />
+      <div style={{ ...S.glassCard, overflow: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ borderBottom: "2px solid #00D4AA" }}>
+              <th style={{ padding: 12, textAlign: "left" }}>Name</th>
+              <th style={{ padding: 12, textAlign: "left" }}>Email</th>
+              <th style={{ padding: 12, textAlign: "right" }}>Balance</th>
+              <th style={{ padding: 12 }}>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(u => (
+              <tr key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <td style={{ padding: 12 }}>{u.name}</td>
+                <td style={{ padding: 12 }}>{u.email}</td>
+                <td style={{ padding: 12, textAlign: "right", fontWeight: 700, color: PALETTE.teal }}>${Number(u.balance || 0).toLocaleString()}</td>
+                <td style={{ padding: 12 }}>
+                  <button onClick={() => {
+                    const amt = prompt("New balance for " + u.email + ":");
+                    if (amt) updateBalance(u.id, parseFloat(amt));
+                  }} style={{ ...S.tealBtn, padding: "8px 16px", fontSize: 13 }}>Update</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 // ── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
