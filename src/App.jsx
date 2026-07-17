@@ -104,6 +104,35 @@ function usePrices() {
   return prices;
 }
 
+// New Hook Added
+function useAuth() {
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+      if (data.session?.user) loadProfile(data.session.user.id);
+      setLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) loadProfile(session.user.id);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  const loadProfile = async (userId) => {
+    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    setProfile(data);
+  };
+
+  return { user, profile, loading, refreshProfile: () => user && loadProfile(user.id) };
+}
+
 // ── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const S = {
   glassCard: { background: "rgba(19,31,53,0.9)", border: "1px solid rgba(0,212,170,0.12)", borderRadius: 16 },
