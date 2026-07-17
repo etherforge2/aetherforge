@@ -1006,6 +1006,7 @@ function Footer({ setPage }) {
     </footer>
   );
 }
+/*
 // ================== ADMIN PANEL ==================
 function AdminPanel() {
   const [users, setUsers] = useState([]);
@@ -1073,7 +1074,7 @@ function AdminPanel() {
     </div>
   );
 }
-
+*/
 // ── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [page, setPage] = useState("home");
