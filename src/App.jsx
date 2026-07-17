@@ -1111,29 +1111,31 @@ export default function App() {
       case "markets": return <MarketsPage prices={prices} />;
       case "dashboard": return <DashboardPage user={user} setPage={nav} setShowAuth={setShowAuth} />;
       case "payment": return <PaymentPage plan={selectedPlan} user={user} setPage={nav} setShowAuth={setShowAuth} />;
+      case "admin": return <AdminPanel />;
       case "affiliate": return <AffiliatePage />;
       case "faq": return <FAQPage />;
       case "contact": return <ContactPage />;
       case "about": return <AboutPage />;
       default: return <HomePage prices={prices} setPage={nav} setShowAuth={setShowAuth} setSelectedPlan={setSelectedPlan} />;
     }
-  };return (
+  };
+
+  return (
     <div style={{ background: PALETTE.void, color: PALETTE.text, fontFamily: "-apple-system,'SF Pro Display','Segoe UI',system-ui,sans-serif", minHeight: "100vh", overflowX: "hidden" }}>
       <style>{`
         *{box-sizing:border-box;margin:0;padding:0}
         input:focus,select:focus,textarea:focus{border-color:rgba(0,212,170,.5)!important;outline:none}
         button:active{opacity:.8}
-                ::-webkit-scrollbar{width:4px;height:4px}
+        ::-webkit-scrollbar{width:4px;height:4px}
         ::-webkit-scrollbar-thumb{background:rgba(0,212,170,.3);border-radius:2px}
         table tr:hover{background:rgba(255,255,255,.02)}
       `}</style>
 
-      <Nav page={page} setPage={nav} user={user} setUser={setUser} setShowAuth={setShowAuth} />
+      <Nav page={page} setPage={nav} user={profile || user} setUser={setUser} setShowAuth={setShowAuth} />
       <LiveTicker prices={prices} />
       <main style={{ minHeight: "80vh" }}>{renderPage()}</main>
       <Footer setPage={nav} />
 
-      {/* Mobile sticky CTA */}
       {isMobile && !user && (
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(8,12,24,0.97)", backdropFilter: "blur(12px)", borderTop: "1px solid rgba(0,212,170,0.15)", padding: "10px 16px", display: "flex", gap: 10 }}>
           <button onClick={() => setShowAuth("login")} style={{ ...S.outlineBtn, flex: 1, padding: "12px 0", fontSize: 14 }}>Login</button>
@@ -1141,7 +1143,7 @@ export default function App() {
         </div>
       )}
 
-      {showAuth && <AuthModal mode={showAuth} onClose={() => setShowAuth(null)} onSuccess={() => {}} />}
+      {showAuth && <AuthModal mode={showAuth} onClose={() => setShowAuth(null)} onSuccess={onAuth} />}
     </div>
   );
 }
