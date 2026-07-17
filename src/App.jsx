@@ -262,13 +262,15 @@ function AuthModal({ mode, onClose, onSuccess }) {
       });
 
       if (result.data.user) {
-        await supabase.from('profiles').insert({
+        const { error: profileError } = await supabase.from('profiles').insert({
           id: result.data.user.id,
           name: form.name || form.email.split("@")[0],
           email: form.email,
           balance: 0,
           total_invested: 0
         });
+
+        if (profileError) console.error("Profile insert error:", profileError);
       }
     } else {
       result = await supabase.auth.signInWithPassword({ 
@@ -283,11 +285,11 @@ function AuthModal({ mode, onClose, onSuccess }) {
     onClose();
   } catch (e) {
     setErr(e.message);
+    console.error(e);
   } finally {
     setLoading(false);
   }
 };
-
 // ── PLAN CARD ────────────────────────────────────────────────────────────────
 function PlanCard({ plan, onSelect }) {
   const [hover, setHover] = useState(false);
