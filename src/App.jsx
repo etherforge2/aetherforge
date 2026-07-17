@@ -1123,7 +1123,7 @@ export default function App() {
         *{box-sizing:border-box;margin:0;padding:0}
         input:focus,select:focus,textarea:focus{border-color:rgba(0,212,170,.5)!important;outline:none}
         button:active{opacity:.8}
-        ::-webkit-scrollbar{width:4px;height:4px}
+                ::-webkit-scrollbar{width:4px;height:4px}
         ::-webkit-scrollbar-thumb{background:rgba(0,212,170,.3);border-radius:2px}
         table tr:hover{background:rgba(255,255,255,.02)}
       `}</style>
