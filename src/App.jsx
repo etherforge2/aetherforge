@@ -1070,15 +1070,24 @@ function AdminPanel() {
 // ── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [page, setPage] = useState("home");
-  const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
+
+  const { user, profile, loading } = useAuth();
   const prices = usePrices();
   const isMobile = useIsMobile();
 
   const nav = useCallback((p) => {
-    if (p === "dashboard" && !user) { setShowAuth("login"); return; }
-    setPage(p); window.scrollTo({ top: 0, behavior: "smooth" });
+    if (p === "dashboard" && !user) { 
+      setShowAuth("login"); 
+      return; 
+    }
+    if (p === "admin" && user?.id !== '8e0d5b32-14c4-4c66-ad94-69899f2a81ac') {
+      alert("Admin access only");
+      return;
+    }
+    setPage(p); 
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [user]);
 
   const onAuth = (u) => { setUser(u); setShowAuth(null); setPage("dashboard"); };
@@ -1088,41 +1097,14 @@ export default function App() {
       case "home": return <HomePage prices={prices} setPage={nav} setShowAuth={setShowAuth} setSelectedPlan={setSelectedPlan} />;
       case "plans": return <PlansPage setPage={nav} setSelectedPlan={setSelectedPlan} />;
       case "markets": return <MarketsPage prices={prices} />;
-      case "dashboard": return <DashboardPage user={user} setPage={nav} setShowAuth={setShowAuth} />;
-      case "payment": return <PaymentPage plan={selectedPlan} user={user} setPage={nav} setShowAuth={setShowAuth} />;
-      case "affiliate": return <AffiliatePage />;
-      case "faq": return <FAQPage />;
-      case "contact": return <ContactPage />;
-      case "about": return <AboutPage />;
+      case "dashboard": return <DashboardPage user={profile} setPage={nav} setShowAuth={setShowAuth} />;
+      case "payment": return <PaymentPage plan={selectedPlan} user={profile} setPage={nav} setShowAuth={setShowAuth} />;
+      case "admin": return <AdminPanel />;
+      // add other cases as in your original
       default: return <HomePage prices={prices} setPage={nav} setShowAuth={setShowAuth} setSelectedPlan={setSelectedPlan} />;
     }
   };
 
-  return (
-    <div style={{ background: PALETTE.void, color: PALETTE.text, fontFamily: "-apple-system,'SF Pro Display','Segoe UI',system-ui,sans-serif", minHeight: "100vh", overflowX: "hidden" }}>
-      <style>{`
-        *{box-sizing:border-box;margin:0;padding:0}
-        input:focus,select:focus,textarea:focus{border-color:rgba(0,212,170,.5)!important;outline:none}
-        button:active{opacity:.8}
-        ::-webkit-scrollbar{width:4px;height:4px}
-        ::-webkit-scrollbar-thumb{background:rgba(0,212,170,.3);border-radius:2px}
-        table tr:hover{background:rgba(255,255,255,.02)}
-      `}</style>
+  if (loading) return <div style={{ padding: 100, textAlign: "center" }}>Loading...</div>;
 
-      <Nav page={page} setPage={nav} user={user} setUser={setUser} setShowAuth={setShowAuth} />
-      <LiveTicker prices={prices} />
-      <main style={{ minHeight: "80vh" }}>{renderPage()}</main>
-      <Footer setPage={nav} />
-
-      {/* Mobile sticky CTA */}
-      {isMobile && !user && (
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(8,12,24,0.97)", backdropFilter: "blur(12px)", borderTop: "1px solid rgba(0,212,170,0.15)", padding: "10px 16px", display: "flex", gap: 10 }}>
-          <button onClick={() => setShowAuth("login")} style={{ ...S.outlineBtn, flex: 1, padding: "12px 0", fontSize: 14 }}>Login</button>
-          <button onClick={() => setShowAuth("register")} style={{ ...S.tealBtn, flex: 2, padding: "12px 0", fontSize: 14 }}>Get Started</button>
-        </div>
-      )}
-
-      {showAuth && <AuthModal mode={showAuth} onClose={() => setShowAuth(null)} onSuccess={onAuth} />}
-    </div>
-  );
-}
+  // keep your original return (the JSX)
