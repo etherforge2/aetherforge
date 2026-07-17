@@ -1080,10 +1080,8 @@ export default function App() {
   const [page, setPage] = useState("home");
   const [showAuth, setShowAuth] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  
-  // New line added
-  const { user, profile, loading } = useAuth();
 
+  const { user, profile, loading } = useAuth();
   const prices = usePrices();
   const isMobile = useIsMobile();
 
@@ -1100,9 +1098,6 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [user]);
 
-  // ... keep everything else the same (the rest of your App function)
-}
-
   const onAuth = (u) => { setUser(u); setShowAuth(null); setPage("dashboard"); };
 
   const renderPage = () => {
@@ -1110,8 +1105,8 @@ export default function App() {
       case "home": return <HomePage prices={prices} setPage={nav} setShowAuth={setShowAuth} setSelectedPlan={setSelectedPlan} />;
       case "plans": return <PlansPage setPage={nav} setSelectedPlan={setSelectedPlan} />;
       case "markets": return <MarketsPage prices={prices} />;
-      case "dashboard": return <DashboardPage user={user} setPage={nav} setShowAuth={setShowAuth} />;
-      case "payment": return <PaymentPage plan={selectedPlan} user={user} setPage={nav} setShowAuth={setShowAuth} />;
+      case "dashboard": return <DashboardPage user={profile} setPage={nav} setShowAuth={setShowAuth} />;
+      case "payment": return <PaymentPage plan={selectedPlan} user={profile} setPage={nav} setShowAuth={setShowAuth} />;
       case "admin": return <AdminPanel />;
       case "affiliate": return <AffiliatePage />;
       case "faq": return <FAQPage />;
@@ -1120,6 +1115,8 @@ export default function App() {
       default: return <HomePage prices={prices} setPage={nav} setShowAuth={setShowAuth} setSelectedPlan={setSelectedPlan} />;
     }
   };
+
+  if (loading) return <div style={{ padding: 100, textAlign: "center" }}>Loading...</div>;
 
   return (
     <div style={{ background: PALETTE.void, color: PALETTE.text, fontFamily: "-apple-system,'SF Pro Display','Segoe UI',system-ui,sans-serif", minHeight: "100vh", overflowX: "hidden" }}>
@@ -1132,7 +1129,7 @@ export default function App() {
         table tr:hover{background:rgba(255,255,255,.02)}
       `}</style>
 
-      <Nav page={page} setPage={nav} user={profile || user} setUser={setUser} setShowAuth={setShowAuth} />
+      <Nav page={page} setPage={nav} user={profile} setUser={setUser} setShowAuth={setShowAuth} />
       <LiveTicker prices={prices} />
       <main style={{ minHeight: "80vh" }}>{renderPage()}</main>
       <Footer setPage={nav} />
