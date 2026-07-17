@@ -1141,7 +1141,7 @@ export default function App() {
         </div>
       )}
 
-      {showAuth && <AuthModal mode={showAuth} onClose={() => setShowAuth(null)} onSuccess={onAuth} />}
+      {showAuth && <AuthModal mode={showAuth} onClose={() => setShowAuth(null)} onSuccess={() => {}} />}
     </div>
   );
 }
