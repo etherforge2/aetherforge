@@ -245,7 +245,8 @@ function AuthModal({ mode, onClose, onSuccess }) {
   const isMobile = useIsMobile();
 
   const handle = async () => {
-      console.log("Registering user:", form.email);
+  alert("Handle started");
+
   if (!form.email || !form.password) { 
     setErr("Email and password required"); 
     return; 
@@ -255,6 +256,7 @@ function AuthModal({ mode, onClose, onSuccess }) {
   setErr("");
 
   try {
+    alert("Trying to sign up");
     let result;
     if (tab === "register") {
       result = await supabase.auth.signUp({ 
@@ -262,14 +264,18 @@ function AuthModal({ mode, onClose, onSuccess }) {
         password: form.password 
       });
 
+      alert("Sign up result: " + JSON.stringify(result));
+
       if (result.data.user) {
-        await supabase.from('profiles').insert({
+        alert("Inserting profile");
+        const { error } = await supabase.from('profiles').insert({
           id: result.data.user.id,
           name: form.name || form.email.split("@")[0],
           email: form.email,
           balance: 0,
           total_invested: 0
         });
+        alert("Insert error: " + (error ? error.message : "No error"));
       }
     } else {
       result = await supabase.auth.signInWithPassword({ 
@@ -280,11 +286,10 @@ function AuthModal({ mode, onClose, onSuccess }) {
 
     if (result.error) throw result.error;
 
-    // Refresh profile
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', result.data.user.id).single();
-    onSuccess(profile);
+    onSuccess();
     onClose();
   } catch (e) {
+    alert("Error: " + e.message);
     setErr(e.message);
   } finally {
     setLoading(false);
