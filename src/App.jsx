@@ -1,3 +1,5 @@
+console.log("Supabase client initialized successfully!");
+
 import { createClient } from '@supabase/supabase-js';
 import { useState, useEffect, useRef, useCallback } from "react";
 
