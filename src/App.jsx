@@ -238,6 +238,18 @@ function Nav({ page, setPage, user, setUser, setShowAuth }) {
   );
 }
 
+case "test": return (
+  <div style={{ padding: 40, textAlign: "center" }}>
+    <h1>Test Supabase</h1>
+    <button onClick={async () => {
+      const { data, error } = await supabase.from('profiles').select('*').limit(1);
+      alert(error ? "Error: " + error.message : "Success! " + JSON.stringify(data));
+    }} style={{ padding: 20, background: "#00D4AA", color: "#000", border: "none", borderRadius: 10 }}>
+      Test Connection
+    </button>
+  </div>
+);
+
 // ── AUTH MODAL ───────────────────────────────────────────────────────────────
 function AuthModal({ mode, onClose, onSuccess }) {
   const [tab, setTab] = useState(mode);
