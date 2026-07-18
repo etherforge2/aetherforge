@@ -1083,6 +1083,11 @@ export default function App() {
   const prices = usePrices();
   const isMobile = useIsMobile();
 
+useEffect(() => {
+  console.log("Supabase is connected!");
+}, []);
+
+
   const nav = useCallback((p) => {
     if (p === "dashboard" && !user) { 
       setShowAuth("login"); 
