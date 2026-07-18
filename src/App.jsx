@@ -349,6 +349,13 @@ function HomePage({ prices, setPage, setShowAuth, setSelectedPlan }) {
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <button onClick={() => setShowAuth("register")} style={{ ...S.tealBtn, padding: isMobile ? "14px 28px" : "15px 36px", fontSize: isMobile ? 15 : 16 }}>Start Investing →</button>
+<button onClick={() => {
+  console.log("Testing Supabase...");
+  supabase.from('profiles').select('count').then(({ data, error }) => {
+    console.log("Test result:", data, error);
+    alert(error ? "Error: " + error.message : "Connected! Rows: " + (data ? data[0].count : 0));
+  });
+}} style={{ ...S.tealBtn, padding: isMobile ? "14px 28px" : "15px 36px", fontSize: isMobile ? 15 : 16, marginLeft: 10 }}>Test Connection</button>
             <button onClick={() => setPage("plans")} style={{ ...S.outlineBtn, padding: isMobile ? "14px 28px" : "15px 36px", fontSize: isMobile ? 15 : 16 }}>View Plans</button>
           </div>
           <div style={{ display: "flex", gap: isMobile ? 16 : 28, justifyContent: "center", marginTop: 36, flexWrap: "wrap" }}>
