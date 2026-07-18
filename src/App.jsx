@@ -1,10 +1,7 @@
-console.log("Supabase client initialized successfully!");
-
 import { createClient } from '@supabase/supabase-js';
-import { useState, useEffect, useRef, useCallback } from "react";
 
-const supabaseUrl = 'https://fuikrlwvqnrhgbtztavm.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1aWtybHd2cW5yaGdidHp0YXZtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzA4MzU0MSwiZXhwIjoyMDk4NjU5NTQxfQ.lLPqKhIJzM1awipmhMYL2IkFZ0b_JR2qYLE1XObWBWk';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -238,17 +235,6 @@ function Nav({ page, setPage, user, setUser, setShowAuth }) {
   );
 }
 
-case "test": return (
-  <div style={{ padding: 40, textAlign: "center" }}>
-    <h1>Test Supabase</h1>
-    <button onClick={async () => {
-      const { data, error } = await supabase.from('profiles').select('*').limit(1);
-      alert(error ? "Error: " + error.message : "Success! " + JSON.stringify(data));
-    }} style={{ padding: 20, background: "#00D4AA", color: "#000", border: "none", borderRadius: 10 }}>
-      Test Connection
-    </button>
-  </div>
-);
 
 // ── AUTH MODAL ───────────────────────────────────────────────────────────────
 function AuthModal({ mode, onClose, onSuccess }) {
