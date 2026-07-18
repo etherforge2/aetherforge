@@ -245,6 +245,7 @@ function AuthModal({ mode, onClose, onSuccess }) {
   const isMobile = useIsMobile();
 
   const handle = async () => {
+      console.log("Registering user:", form.email);
   if (!form.email || !form.password) { 
     setErr("Email and password required"); 
     return; 
