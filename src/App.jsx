@@ -1,5 +1,11 @@
+import { createClient } from '@supabase/supabase-js';
 
 import { useState, useEffect, useRef, useCallback } from "react";
+
+const supabaseUrl = 'https://fuikrlwvqnrhgbtztavm.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1aWtybHd2cW5yaGdidHp0YXZtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzA4MzU0MSwiZXhwIjoyMDk4NjU5NTQxfQ.lLPqKhIJzM1awipmhMYL2IkFZ0b_JR2qYLE1XObWBWk';
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const BRAND = { name: "AetherForge", tagline: "Institutional-Grade Trading Returns for Everyone", since: "2019" };
 
