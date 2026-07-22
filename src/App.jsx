@@ -1,3 +1,4 @@
+import { supabase } from './supabaseClient';
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
