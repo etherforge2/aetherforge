@@ -257,7 +257,7 @@ function AuthModal({ mode, onClose, onSuccess }) {
         alert("Registration successful! Please check your email to confirm (if enabled).");
         onClose();
       }
-    } catch (error: any) {
+    } catch (error) {
       setErr(error.message || "Something went wrong");
     } finally {
       setLoading(false);
