@@ -1,9 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { useState, useEffect, useRef, useCallback } from "react";
 
 const BRAND = { name: "AetherForge", tagline: "Institutional-Grade Trading Returns for Everyone", since: "2019" };
 
@@ -101,35 +97,6 @@ function usePrices() {
     })));
   }, 1800);
   return prices;
-}
-
-// New Hook Added
-function useAuth() {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
-      if (data.session?.user) loadProfile(data.session.user.id);
-      setLoading(false);
-    });
-
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) loadProfile(session.user.id);
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  const loadProfile = async (userId) => {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    setProfile(data);
-  };
-
-  return { user, profile, loading, refreshProfile: () => user && loadProfile(user.id) };
 }
 
 // ── DESIGN TOKENS ────────────────────────────────────────────────────────────
@@ -235,7 +202,6 @@ function Nav({ page, setPage, user, setUser, setShowAuth }) {
   );
 }
 
-
 // ── AUTH MODAL ───────────────────────────────────────────────────────────────
 function AuthModal({ mode, onClose, onSuccess }) {
   const [tab, setTab] = useState(mode);
@@ -245,56 +211,46 @@ function AuthModal({ mode, onClose, onSuccess }) {
   const isMobile = useIsMobile();
 
   const handle = async () => {
-  alert("Handle started");
+    if (!form.email || !form.password) { setErr("Please fill required fields."); return; }
+    setLoading(true); await new Promise(r => setTimeout(r, 1200)); setLoading(false);
+    onSuccess({ name: form.name || form.email.split("@")[0], email: form.email, balance: 0 });
+  };
 
-  if (!form.email || !form.password) { 
-    setErr("Email and password required"); 
-    return; 
-  }
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", background: "rgba(8,12,24,0.85)", backdropFilter: "blur(8px)" }}>
+      <div style={{ ...S.glassCard, width: "100%", maxWidth: isMobile ? "100%" : 440, padding: isMobile ? "28px 20px 40px" : 40, borderRadius: isMobile ? "20px 20px 0 0" : 16, position: "relative", maxHeight: "90vh", overflowY: "auto" }}>
+        <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", color: PALETTE.textMuted, fontSize: 22, cursor: "pointer" }}>✕</button>
+        <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "rgba(0,0,0,0.3)", borderRadius: 10, padding: 4 }}>
+          {["login", "register"].map(t => (
+            <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "10px", border: "none", borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: "pointer", background: tab === t ? PALETTE.teal : "transparent", color: tab === t ? "#080C18" : PALETTE.textMuted, transition: "all .2s" }}>{t === "login" ? "Sign In" : "Register"}</button>
+          ))}
+        </div>
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 4 }}>{tab === "login" ? "Welcome back" : "Create Account"}</div>
+          <div style={{ color: PALETTE.textMuted, fontSize: 13 }}>{tab === "login" ? "Access your trading dashboard" : "Join 284,917+ investors worldwide"}</div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {tab === "register" && <div><label style={S.label}>Full Name *</label><input style={S.input} placeholder="John Smith" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} /></div>}
+          <div><label style={S.label}>Email *</label><input style={S.input} type="email" placeholder="you@example.com" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} /></div>
+          <div><label style={S.label}>Password *</label><input style={S.input} type="password" placeholder="••••••••" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} /></div>
+          {tab === "register" && (
+            <div><label style={S.label}>Country</label>
+              <select style={{ ...S.input, appearance: "none" }} value={form.country} onChange={e => setForm(p => ({ ...p, country: e.target.value }))}>
+                <option value="">Select...</option>
+                {["United Kingdom","Singapore","United States","Australia","Germany","Canada","UAE","Other"].map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+          )}
+          {err && <div style={{ color: PALETTE.danger, fontSize: 13, textAlign: "center" }}>{err}</div>}
+          <button onClick={handle} style={{ ...S.tealBtn, width: "100%", padding: "14px 0", fontSize: 15, marginTop: 4 }} disabled={loading}>{loading ? "Processing..." : tab === "login" ? "Sign In" : "Create Account"}</button>
+        </div>
+        <div style={{ marginTop: 16, padding: 12, background: "rgba(0,0,0,0.3)", borderRadius: 8, fontSize: 11, color: PALETTE.textDim, lineHeight: 1.6 }}>🔒 AES-256 encrypted. FCA regulated. Capital at risk.</div>
+      </div>
+    </div>
+  );
 
-  setLoading(true);
-  setErr("");
+}
 
-  try {
-    alert("Trying to sign up");
-    let result;
-    if (tab === "register") {
-      result = await supabase.auth.signUp({ 
-        email: form.email, 
-        password: form.password 
-      });
-
-      alert("Sign up result: " + JSON.stringify(result));
-
-      if (result.data.user) {
-        alert("Inserting profile");
-        const { error } = await supabase.from('profiles').insert({
-          id: result.data.user.id,
-          name: form.name || form.email.split("@")[0],
-          email: form.email,
-          balance: 0,
-          total_invested: 0
-        });
-        alert("Insert error: " + (error ? error.message : "No error"));
-      }
-    } else {
-      result = await supabase.auth.signInWithPassword({ 
-        email: form.email, 
-        password: form.password 
-      });
-    }
-
-    if (result.error) throw result.error;
-
-    onSuccess();
-    onClose();
-  } catch (e) {
-    alert("Error: " + e.message);
-    setErr(e.message);
-  } finally {
-    setLoading(false);
-  }
-};
 // ── PLAN CARD ────────────────────────────────────────────────────────────────
 function PlanCard({ plan, onSelect }) {
   const [hover, setHover] = useState(false);
@@ -352,13 +308,6 @@ function HomePage({ prices, setPage, setShowAuth, setSelectedPlan }) {
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <button onClick={() => setShowAuth("register")} style={{ ...S.tealBtn, padding: isMobile ? "14px 28px" : "15px 36px", fontSize: isMobile ? 15 : 16 }}>Start Investing →</button>
-<button onClick={() => {
-  console.log("Testing Supabase...");
-  supabase.from('profiles').select('count').then(({ data, error }) => {
-    console.log("Test result:", data, error);
-    alert(error ? "Error: " + error.message : "Connected! Rows: " + (data ? data[0].count : 0));
-  });
-}} style={{ ...S.tealBtn, padding: isMobile ? "14px 28px" : "15px 36px", fontSize: isMobile ? 15 : 16, marginLeft: 10 }}>Test Connection</button>
             <button onClick={() => setPage("plans")} style={{ ...S.outlineBtn, padding: isMobile ? "14px 28px" : "15px 36px", fontSize: isMobile ? 15 : 16 }}>View Plans</button>
           </div>
           <div style={{ display: "flex", gap: isMobile ? 16 : 28, justifyContent: "center", marginTop: 36, flexWrap: "wrap" }}>
@@ -423,7 +372,8 @@ function HomePage({ prices, setPage, setShowAuth, setSelectedPlan }) {
                     <span style={{ fontWeight: 700, fontSize: 14 }}>{t.asset}</span>
                     <span style={{ background: t.type === "BUY" ? "rgba(72,187,120,0.15)" : "rgba(245,101,101,0.15)", color: t.type === "BUY" ? PALETTE.success : PALETTE.danger, borderRadius: 6, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>{t.type}</span>
                   </div>
-                  <div style={{ fontSize: 12, color: PALETTE.textMuted, fontFamily: "monospace" }}>{t.time}</div>
+                  <div style={{ fontSize: 12, color: PALETTE.textMuted, fontFamily: 
+"monospace" }}>{t.time}</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ color: PALETTE.success, fontWeight: 700, fontSize: 15 }}>+{fmtUSD(t.pnl)}</div>
@@ -894,7 +844,7 @@ function FAQPage() {
         <div style={S.badge}>FAQ</div>
         <h1 style={{ fontSize: isMobile ? 26 : 40, fontWeight: 800, letterSpacing: "-0.03em", marginTop: 12, marginBottom: 10 }}>Frequently Asked Questions</h1>
         <div style={{ color: PALETTE.textMuted, fontSize: 14 }}>Can't find your answer? Contact our 24/7 support team.</div>
-      </div>
+    </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {faqs.map((f, i) => (
           <div key={i} style={{ ...S.glassCard, overflow: "hidden" }}>
@@ -1030,87 +980,19 @@ function Footer({ setPage }) {
     </footer>
   );
 }
-// Admin Panel
-function AdminPanel() {
-  const [users, setUsers] = useState([]);
-  const [search, setSearch] = useState("");
-
-  useEffect(() => { fetchUsers(); }, []);
-
-  async function fetchUsers() {
-    const { data } = await supabase.from('profiles').select('*');
-    setUsers(data || []);
-  }
-
-  async function updateBalance(userId, newBalance) {
-    if (!confirm("Update this user's balance?")) return;
-    await supabase.from('profiles').update({ balance: newBalance }).eq('id', userId);
-    fetchUsers();
-  }
-
-  const filtered = users.filter(u => u.email?.toLowerCase().includes(search.toLowerCase()));
-
-  return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 16px" }}>
-      <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 20 }}>Admin Panel - Balance Management</h1>
-      <input type="text" placeholder="Search by email..." value={search} onChange={e => setSearch(e.target.value)} style={{ ...S.input, marginBottom: 20, width: "100%" }} />
-      <div style={{ ...S.glassCard, overflow: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ borderBottom: "2px solid #00D4AA" }}>
-              <th style={{ padding: 12, textAlign: "left" }}>Name</th>
-              <th style={{ padding: 12, textAlign: "left" }}>Email</th>
-              <th style={{ padding: 12, textAlign: "right" }}>Balance</th>
-              <th style={{ padding: 12 }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(u => (
-              <tr key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <td style={{ padding: 12 }}>{u.name}</td>
-                <td style={{ padding: 12 }}>{u.email}</td>
-                <td style={{ padding: 12, textAlign: "right", fontWeight: 700, color: PALETTE.teal }}>${Number(u.balance || 0).toLocaleString()}</td>
-                <td style={{ padding: 12 }}>
-                  <button onClick={() => {
-                    const amt = prompt("New balance for " + u.email + ":");
-                    if (amt) updateBalance(u.id, parseFloat(amt));
-                  }} style={{ ...S.tealBtn, padding: "8px 16px", fontSize: 13 }}>Update</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
 
 // ── ROOT ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [page, setPage] = useState("home");
+  const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
-
-  const { user, profile, loading } = useAuth();
   const prices = usePrices();
   const isMobile = useIsMobile();
 
-useEffect(() => {
-  console.log("Supabase is connected!");
-}, []);
-
-
   const nav = useCallback((p) => {
-    if (p === "dashboard" && !user) { 
-      setShowAuth("login"); 
-      return; 
-    }
-    if (p === "admin" && user?.id !== '8e0d5b32-14c4-4c66-ad94-69899f2a81ac') {
-      alert("Admin access only");
-      return;
-    }
-    setPage(p); 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (p === "dashboard" && !user) { setShowAuth("login"); return; }
+    setPage(p); window.scrollTo({ top: 0, behavior: "smooth" });
   }, [user]);
 
   const onAuth = (u) => { setUser(u); setShowAuth(null); setPage("dashboard"); };
@@ -1120,14 +1002,41 @@ useEffect(() => {
       case "home": return <HomePage prices={prices} setPage={nav} setShowAuth={setShowAuth} setSelectedPlan={setSelectedPlan} />;
       case "plans": return <PlansPage setPage={nav} setSelectedPlan={setSelectedPlan} />;
       case "markets": return <MarketsPage prices={prices} />;
-      case "dashboard": return <DashboardPage user={profile} setPage={nav} setShowAuth={setShowAuth} />;
-      case "payment": return <PaymentPage plan={selectedPlan} user={profile} setPage={nav} setShowAuth={setShowAuth} />;
-      case "admin": return <AdminPanel />;
-      // add other cases as in your original
+      case "dashboard": return <DashboardPage user={user} setPage={nav} setShowAuth={setShowAuth} />;
+      case "payment": return <PaymentPage plan={selectedPlan} user={user} setPage={nav} setShowAuth={setShowAuth} />;
+      case "affiliate": return <AffiliatePage />;
+      case "faq": return <FAQPage />;
+      case "contact": return <ContactPage />;
+      case "about": return <AboutPage />;
       default: return <HomePage prices={prices} setPage={nav} setShowAuth={setShowAuth} setSelectedPlan={setSelectedPlan} />;
     }
   };
 
-  if (loading) return <div style={{ padding: 100, textAlign: "center" }}>Loading...</div>;
+  return (
+    <div style={{ background: PALETTE.void, color: PALETTE.text, fontFamily: "-apple-system,'SF Pro Display','Segoe UI',system-ui,sans-serif", minHeight: "100vh", overflowX: "hidden" }}>
+      <style>{`
+        *{box-sizing:border-box;margin:0;padding:0}
+        input:focus,select:focus,textarea:focus{border-color:rgba(0,212,170,.5)!important;outline:none}
+        button:active{opacity:.8}
+    ::-webkit-scrollbar{width:4px;height:4px}
+        ::-webkit-scrollbar-thumb{background:rgba(0,212,170,.3);border-radius:2px}
+        table tr:hover{background:rgba(255,255,255,.02)}
+      `}</style>
 
-  // keep your original return (the JSX)
+      <Nav page={page} setPage={nav} user={user} setUser={setUser} setShowAuth={setShowAuth} />
+      <LiveTicker prices={prices} />
+      <main style={{ minHeight: "80vh" }}>{renderPage()}</main>
+      <Footer setPage={nav} />
+
+      {/* Mobile sticky CTA */}
+      {isMobile && !user && (
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 50, background: "rgba(8,12,24,0.97)", backdropFilter: "blur(12px)", borderTop: "1px solid rgba(0,212,170,0.15)", padding: "10px 16px", display: "flex", gap: 10 }}>
+          <button onClick={() => setShowAuth("login")} style={{ ...S.outlineBtn, flex: 1, padding: "12px 0", fontSize: 14 }}>Login</button>
+          <button onClick={() => setShowAuth("register")} style={{ ...S.tealBtn, flex: 2, padding: "12px 0", fontSize: 14 }}>Get Started</button>
+        </div>
+      )}
+
+      {showAuth && <AuthModal mode={showAuth} onClose={() => setShowAuth(null)} onSuccess={onAuth} />}
+    </div>
+  );
+}
